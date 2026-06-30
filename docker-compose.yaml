@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:16
+    container_name: etl_postgres
+    environment:
+      POSTGRES_USER: etl_postgres_user
+      POSTGRES_PASSWORD: etl_postgres_pass
+      POSTGRES_DB: db_etl_postgres
+      TZ: Asia/Jakarta
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data:/var/lib/postgresql/data_raw
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U etl_postgres_user -d db_etl_postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: [
+      "postgres",
+      "-c", "max_wal_size=4GB",      # Menaikkan batas tampung WAL supaya tidak keseringan checkpoint
+      "-c", "min_wal_size=1GB",      # Menjaga performa alokasi WAL minimum
+      "-c", "checkpoint_completion_target=0.9", # Menyebar beban penulisan diska agar lebih halus
+      "-c", "log_timezone=Asia/Jakarta"
+    ]
+  
+  etl_pipeline:
+    build: .
+    container_name: etl_postgres_container
+    ports:
+      - "8080:8080"
+    environment:
+      DATA_URL_ZONE: "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv"
+      DATA_URL_TRIP: "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-01.parquet"
+      DB_CONNECTION: "postgresql+psycopg2://etl_postgres_user:etl_postgres_pass@db:5432/db_etl_postgres"
+      TZ: Asia/Jakarta
+    # (Opsional) file log & data hasil ETL langsung muncul di laptop:
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
