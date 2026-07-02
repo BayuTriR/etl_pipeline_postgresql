@@ -60,7 +60,7 @@ if __name__ == "__main__":
         # # ==============================================================================
         # # PROSES EXTRACT & LOAD TO DB
         # # ==============================================================================
-        print("--- MEMULAI PROSES EXTRACT & LOAD TO DB ---\n")
+        print("--- MEMULAI PROSES EXTRACT & LOAD TO DB BRONZE ---\n")
 
         log_message("Running extract & load to DB")
 
@@ -84,24 +84,38 @@ if __name__ == "__main__":
 
         if run_id:
             with engine.connect() as conn:
-                # Menggunakan tabel utama taksi di layer bronze (sesuai 'target_table' parquet kamu)
-                res_bronze = conn.execute(text("SELECT COUNT(*) FROM bronze.raw_taxi_trips;"))
-                bronze_count = res_bronze.fetchone()[0]
+                raw_taxi_trips = conn.execute(text("SELECT COUNT(*) FROM bronze.raw_taxi_trips;"))
+                raw_taxi_trips_count = raw_taxi_trips.fetchone()[0]
                 
                 conn.execute(text("""
-                    UPDATE audit.pipeline_run SET bronze_row_count = :count WHERE run_id = :run_id;
-                """), {"count": bronze_count, "run_id": run_id})
+                    UPDATE audit.pipeline_run SET raw_taxi_trips_row_count = :count WHERE run_id = :run_id;
+                """), {"count": raw_taxi_trips_count, "run_id": run_id})
                 conn.commit()
-                print(f"Audit: {bronze_count:,} baris terdeteksi di layer Bronze.")
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke Table Bronze.Raw Taxi Trips: {raw_taxi_trips_count:,} baris .")
+                print("==================================================\n")
+
+                raw_taxi_zones = conn.execute(text("SELECT COUNT(*) FROM bronze.raw_taxi_zones;"))
+                raw_taxi_zones_count = raw_taxi_zones.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET raw_taxi_zones_row_count = :count WHERE run_id = :run_id;
+                """), {"count": raw_taxi_zones_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke Table Bronze.Raw Taxi Zones: {raw_taxi_zones_count:,} baris .")
+                print("==================================================\n")
 
         log_message("Extract & load to DB completed\n")
 
         print("--- PROSES EXTRACT & LOAD TO DB SELESAI ---\n\n")
         
         # ==============================================================================
-        # PROSES TRANSFORM
+        # PROSES TRANSFORM DB SILVER
         # ==============================================================================
-        print("--- MEMULAI PROSES TRANSFORM MELALUI QUERY---\n")
+        print("--- MEMULAI PROSES TRANSFORM DB SILVER MELALUI QUERY---\n")
 
         log_message("Running transform")
 
@@ -113,19 +127,114 @@ if __name__ == "__main__":
 
         if run_id:
             with engine.connect() as conn:
-                # Sesuai nama tabel tujuan CTAS di 03_silver_transform.sql kamu sebelumnya
-                res_silver = conn.execute(text("SELECT COUNT(*) FROM silver.taxi_trips_cleaned;"))
-                silver_count = res_silver.fetchone()[0]
+                taxi_trips_cleaned = conn.execute(text("SELECT COUNT(*) FROM silver.taxi_trips_cleaned;"))
+                taxi_trips_cleaned_count = taxi_trips_cleaned.fetchone()[0]
                 
                 conn.execute(text("""
-                    UPDATE audit.pipeline_run SET silver_row_count = :count WHERE run_id = :run_id;
-                """), {"count": silver_count, "run_id": run_id})
+                    UPDATE audit.pipeline_run SET taxi_trips_cleaned_row_count = :count WHERE run_id = :run_id;
+                """), {"count": taxi_trips_cleaned_count, "run_id": run_id})
                 conn.commit()
-                print(f"Audit: {silver_count:,} baris sukses dimuat ke layer Silver (Final).")
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke Table Silver.Taxi Trip Cleaned: {taxi_trips_cleaned_count:,} baris .")
+                print("==================================================\n")
+
+                taxi_zones = conn.execute(text("SELECT COUNT(*) FROM silver.taxi_zones;"))
+                taxi_zones_count = taxi_zones.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET taxi_zones_row_count = :count WHERE run_id = :run_id;
+                """), {"count": taxi_zones_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke Table Silver.Taxi Zones: {taxi_zones_count:,} baris .")
+                print("==================================================\n")
+
+                data_quality_issues = conn.execute(text("SELECT COUNT(*) FROM silver.data_quality_issues;"))
+                data_quality_issues_count = data_quality_issues.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET data_quality_issues_row_count = :count WHERE run_id = :run_id;
+                """), {"count": data_quality_issues_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke Table Silver.Data Quality Issues: {data_quality_issues_count:,} baris .")
+                print("==================================================\n")
 
         log_message("Transform completed")
 
         print("\n--- PROSES TRANSFORM SELESAI ---\n\n")
+
+        # ==============================================================================
+        # PROSES LOAD DB GOLD
+        # ==============================================================================
+        print("--- MEMULAI PROSES LOAD DB GOLD MELALUI QUERY---\n")
+
+        log_message("Running load")
+
+        print("Load table mart ke db gold")
+        schema_manager.execute_sql_file("db/init/04_gold_mart.sql")
+
+        if run_id:
+            with engine.connect() as conn:
+                daily_trip_summary = conn.execute(text("SELECT COUNT(*) FROM gold.daily_trip_summary;"))
+                daily_trip_summary_count = daily_trip_summary.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET daily_trip_row_count = :count WHERE run_id = :run_id;
+                """), {"count": daily_trip_summary_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke Table Gold.Daily Trip Summary: {daily_trip_summary_count:,} baris .")
+                print("==================================================\n")
+
+        print("Load view ke db gold")
+        schema_manager.execute_sql_file("db/init/05_views.sql")
+
+        if run_id:
+            with engine.connect() as conn:
+                vw_trip_enriched = conn.execute(text("SELECT COUNT(*) FROM gold.vw_trip_enriched;"))
+                vw_trip_enriched_count = vw_trip_enriched.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET vw_trip_enriched_row_count = :count WHERE run_id = :run_id;
+                """), {"count": vw_trip_enriched_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke View Gold.VW Trip Enriched: {vw_trip_enriched_count:,} baris .")
+                print("==================================================\n")
+
+                vw_daily_trip_summary = conn.execute(text("SELECT COUNT(*) FROM gold.vw_daily_trip_summary;"))
+                vw_daily_trip_summary_count = vw_daily_trip_summary.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET vw_daily_trip_row_count = :count WHERE run_id = :run_id;
+                """), {"count": vw_daily_trip_summary_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke View Gold.VW Daily Trip Summary: {vw_daily_trip_summary_count:,} baris .")
+                print("==================================================\n")
+
+                vw_zone_performance = conn.execute(text("SELECT COUNT(*) FROM gold.vw_zone_performance;"))
+                vw_zone_performance_count = vw_zone_performance.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET vw_zone_performance_row_count = :count WHERE run_id = :run_id;
+                """), {"count": vw_zone_performance_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke View Gold.VW Zone Performance: {vw_zone_performance_count:,} baris .")
+                print("==================================================\n")
+        
+        log_message("Load completed")
+
+        print("\n--- PROSES LOAD SELESAI ---\n\n")
 
         if run_id:
             duration = round(time.time() - start_time_seconds, 2)

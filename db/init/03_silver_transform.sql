@@ -2,7 +2,7 @@
 -- PROSES TRANSFORM CLEAN
 -- ==============================================================================
 
-DROP TABLE IF EXISTS silver.taxi_trips_cleaned;
+DROP TABLE IF EXISTS silver.taxi_trips_cleaned CASCADE;
 
 CREATE TABLE silver.taxi_trips_cleaned AS
 WITH temp_taxi_trips AS (
@@ -81,28 +81,33 @@ DROP TABLE IF EXISTS silver.temp_taxi_trips CASCADE;
 
 UPDATE silver.taxi_trips_cleaned
 SET 
-    vendor_id       = COALESCE(vendor_id, -999),
-    passenger_count = COALESCE(passenger_count, -999),
-    trip_distance   = COALESCE(trip_distance, -999),
-    fare_amount     = COALESCE(fare_amount, -999),
-    tip_amount      = COALESCE(tip_amount, -999),
-    total_amount    = COALESCE(total_amount, -999),
-    pickup_borough  = COALESCE(pickup_borough, 'Unknown'),
-    dropoff_borough = COALESCE(dropoff_borough, 'Unknown');
+    passenger_count         = COALESCE(passenger_count, -999),
+    trip_distance           = COALESCE(trip_distance, -999),
+    ratecode_id             = COALESCE(ratecode_id, -999),
+    fare_amount             = COALESCE(fare_amount, -999),
+    total_amount            = COALESCE(total_amount, -999),
+    tip_amount              = COALESCE(tip_amount, -999),
+    tolls_amount            = COALESCE(tolls_amount, -999),
+    congestion_surcharge    = COALESCE(congestion_surcharge, -999),
+    airport_fee             = COALESCE(airport_fee, -999);
 
 ALTER TABLE silver.taxi_trips_cleaned 
 ALTER COLUMN vendor_id SET NOT NULL,
 ALTER COLUMN tpep_pickup_datetime SET NOT NULL,
 ALTER COLUMN tpep_dropoff_datetime SET NOT NULL,
-ALTER COLUMN pickup_borough SET NOT NULL,
-ALTER COLUMN dropoff_borough SET NOT NULL;
+ALTER COLUMN pulocation_id SET NOT NULL,
+ALTER COLUMN dolocation_id SET NOT NULL;
 
 ALTER TABLE silver.taxi_trips_cleaned 
 ADD CONSTRAINT chk_passenger_count CHECK (passenger_count >= 0 OR passenger_count = -999),
-ADD CONSTRAINT chk_trip_distance   CHECK (trip_distance >= 0 OR trip_distance = -999),
-ADD CONSTRAINT chk_fare_amount     CHECK (fare_amount >= 0 OR fare_amount = -999),
-ADD CONSTRAINT chk_tip_amount      CHECK (tip_amount >= 0 OR tip_amount = -999),
-ADD CONSTRAINT chk_total_amount    CHECK (total_amount >= 0 OR total_amount = -999);
+ADD CONSTRAINT chk_trip_distance CHECK (trip_distance >= 0 OR trip_distance = -999),
+ADD CONSTRAINT chk_ratecode_id CHECK (ratecode_id IN (1, 2, 3, 4, 5, 6, 99, -999)),
+ADD CONSTRAINT chk_fare_amount CHECK (fare_amount >= 0 OR fare_amount = -999),
+ADD CONSTRAINT chk_total_amount CHECK (total_amount >= 0 OR total_amount = -999),
+ADD CONSTRAINT chk_tip_amount CHECK (tip_amount >= 0 OR tip_amount = -999),
+ADD CONSTRAINT chk_tolls_amount CHECK (tolls_amount >= 0 OR tolls_amount = -999),
+ADD CONSTRAINT chk_congestion_surcharge CHECK (congestion_surcharge >= 0 OR congestion_surcharge = -999),
+ADD CONSTRAINT chk_airport_fee CHECK (airport_fee >= 0 OR airport_fee = -999);
 
 ALTER TABLE silver.taxi_trips_cleaned
 ADD CONSTRAINT fk_pickup_location 
@@ -116,6 +121,8 @@ FOREIGN KEY (dolocation_id) REFERENCES silver.taxi_zones(location_id);
 -- PROSES TRANSFORM DATA QUALITY
 -- ==============================================================================
 
+DROP TABLE IF EXISTS silver.data_quality_issues CASCADE;
+
 CREATE TABLE silver.data_quality_issues AS
 WITH temp_issues AS (
 SELECT
@@ -128,5 +135,5 @@ SELECT
 FROM silver.taxi_trips_cleaned t
 )
 SELECT * FROM temp_issues
-WHERE error_type <> 'valid';d
+WHERE error_type <> 'valid';
 
