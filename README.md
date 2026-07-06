@@ -72,8 +72,8 @@ Git Bash (Jika menggunakan OS Windows untuk eksekusi terminal shell script)
     ```bash
     docker compose up --build
 3. Memeriksa Hasil Output  
-    Setelah kontainer selesai dieksekusi (exited with code 0):
-    File Log: Periksa folder ./logs/ di laptop Anda untuk melihat rekam jejak jalannya pipa data secara mendetail.
+    Setelah kontainer selesai dieksekusi (exited with code 0):  
+    File Log: Periksa folder ./logs/ di laptop Anda untuk melihat rekam jejak jalannya pipa data secara mendetail.  
     Database: Periksa table audit.pipeline_run untuk melihat jumlah row yang terinput ke masing-masing table & view.
 
 ## Detail Alur Kerja Medallion Pipeline
