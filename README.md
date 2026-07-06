@@ -53,14 +53,14 @@ TUGAS_2/
 ```
 
 ## Teknologi & Dependensi
-Core Runtime & Driver: Python 3.x, PostgreSQL
-Orchestration & Infrastructure: Docker, Docker Compose, Linux Bash Shell Script
+Core Runtime & Driver: Python 3.x, PostgreSQL  
+Orchestration & Infrastructure: Docker, Docker Compose, Linux Bash Shell Script  
 Database Connector: psycopg2-binary atau SQLAlchemy
 
 ## Prasyarat Sistem
-Sebelum menjalankan proyek ini, pastikan komputer Anda sudah terinstal:
-Docker Desktop (Termasuk Docker Compose)
-Python 3.x
+Sebelum menjalankan proyek ini, pastikan komputer Anda sudah terinstal:  
+Docker Desktop (Termasuk Docker Compose)  
+Python 3.x  
 Git Bash (Jika menggunakan OS Windows untuk eksekusi terminal shell script)
 
 ## Cara Penggunaan (Docker & Python)
@@ -68,22 +68,22 @@ Git Bash (Jika menggunakan OS Windows untuk eksekusi terminal shell script)
     ```bash
     git clone [https://github.com/BayuTriR/etl_pipeline_postgresql](https://github.com/BayuTriR/etl_pipeline_postgresql)
     cd etl_pipeline_postgresql
-2. Jalankan Menggunakan Docker Compose
+2. Jalankan Menggunakan Docker Compose  
     docker compose up --build
-3. Memeriksa Hasil Output
+3. Memeriksa Hasil Output  
     Setelah kontainer selesai dieksekusi (exited with code 0):
     File Log: Periksa folder ./logs/ di laptop Anda untuk melihat rekam jejak jalannya pipa data secara mendetail.
     Database: Periksa table audit.pipeline_run untuk melihat jumlah row yang terinput ke masing-masing table & view.
 
 ## Detail Alur Kerja Medallion Pipeline
-1. Inisialisasi & Skema (01_schema.sql)
+1. Inisialisasi & Skema (01_schema.sql)  
     Membangun pondasi tabel dan batasan (constraints) di database.
-2. Tahap Bronze (02_bronze_load.sql)
+2. Tahap Bronze (02_bronze_load.sql)  
     Melakukan ekstraksi awal dan memuat data ke dalam tabel penampungan tanpa manipulasi struktur (schema bronze)
-3. Tahap Silver (03_silver_transform.sql)
+3. Tahap Silver (03_silver_transform.sql)  
     Mengubah skema seluruh kolom menjadi huruf kecil dengan pemisah garis bawah (snake_case).
     Melakukan operasi cleaning, menangani nilai kosong (handling nulls), pembersihan tipe data, deduping, dan transformasi standar.
-4. Tahap Gold & Analytical Views (04_gold_mart, 05_views)
+4. Tahap Gold & Analytical Views (04_gold_mart, 05_views)  
     Menyusun data hasil transformasi ke format Data Mart teragregasi yang optimal untuk kebutuhan pembuatan laporan.
-5. Business Query & Reporting (01_business_questions.sql)
+5. Business Query & Reporting (01_business_questions.sql)  
     Mengambil metrik performa bisnis dari layer Gold, yang kemudian dirangkum menjadi dokumen laporan insight pada berkas docs/insight_report.md.
