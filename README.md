@@ -69,6 +69,7 @@ Git Bash (Jika menggunakan OS Windows untuk eksekusi terminal shell script)
     git clone [https://github.com/BayuTriR/etl_pipeline_postgresql](https://github.com/BayuTriR/etl_pipeline_postgresql)
     cd etl_pipeline_postgresql
 2. Jalankan Menggunakan Docker Compose  
+    ```bash
     docker compose up --build
 3. Memeriksa Hasil Output  
     Setelah kontainer selesai dieksekusi (exited with code 0):
