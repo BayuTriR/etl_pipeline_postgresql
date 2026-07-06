@@ -38,6 +38,7 @@ TUGAS_2/
 │   └── queries/
 │       └── 01_business_questions.sql   # Kumpulan query analitis untuk business question
 ├── docs/                               # Dokumentasi analisis proyek
+│   └── ERD.png                         # Design ERD dari database
 │   └── insight_report.md               # Laporan hasil temuan insight bisnis
 ├── logs/                               # Berkas catatan automasi pipeline (Log files)
 ├── src/                                # Modul logika kode Python utama
