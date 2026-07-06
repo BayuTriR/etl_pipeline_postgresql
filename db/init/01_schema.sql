@@ -7,6 +7,8 @@ CREATE SCHEMA IF NOT EXISTS silver;
 CREATE SCHEMA IF NOT EXISTS gold;
 CREATE SCHEMA IF NOT EXISTS audit;
 
+DROP TABLE IF EXISTS bronze.raw_taxi_trips;
+
 CREATE TABLE IF NOT EXISTS bronze.raw_taxi_zones (
     "LocationID" INT PRIMARY KEY,
     "Borough" VARCHAR(255) NOT NULL,

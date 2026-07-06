@@ -89,12 +89,10 @@ class BronzeLoader(DataExtraction):
                 for batch in parquet_file.iter_batches(batch_size=500000):
                     df_chunk = batch.to_pandas()
                     for col in df_chunk.select_dtypes(include=['float64', 'float32']).columns:
-                        # Jika kolom tersebut aslinya bertipe integer di skema parquet atau tidak memiliki pecahan ril
-                        if col in ['passenger_count', 'RatecodeID', 'vendor_id', 'VendorID', 'payment_type']:
-                            df_chunk[col] = df_chunk[col].astype('Int64') # Menggunakan Int64 (Capital I) milik pandas yang mendukung NaN/Null tanpa mengubah ke float
+                        if col in ['VendorID',  'passenger_count', 'RatecodeID', 'payment_type']:
+                            df_chunk[col] = df_chunk[col].astype('Int64')
                             
                     if is_first_chunk:
-                        # Buat struktur tabel kosong di Postgres sesuai skema dataframe
                         df_chunk.head(0).to_sql(
                             table_name, 
                             self.engine, 
@@ -109,7 +107,7 @@ class BronzeLoader(DataExtraction):
                     df_chunk.to_csv(output, sep='\t', header=False, index=False, na_rep='\\N')
                     output.seek(0)
                     
-                    # Tembak langsung data teks ke tabel menggunakan command COPY Postgres
+                    # Load data teks ke tabel menggunakan command COPY Postgres
                     cursor.copy_expert(
                         f"COPY bronze.{table_name} FROM STDIN WITH (FORMAT CSV, DELIMITER '\t', NULL '\\N')", 
                         output
@@ -118,7 +116,6 @@ class BronzeLoader(DataExtraction):
                     total_rows += len(df_chunk)
                     print(f"⚡ [COPY SUCCESS] Total {total_rows} baris masuk ke database...")
                 
-                # Commit semua transaksi setelah looping selesai
                 raw_conn.commit()
                 
         except Exception as e:

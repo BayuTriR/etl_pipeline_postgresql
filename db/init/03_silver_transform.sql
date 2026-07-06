@@ -99,15 +99,15 @@ ALTER COLUMN pulocation_id SET NOT NULL,
 ALTER COLUMN dolocation_id SET NOT NULL;
 
 ALTER TABLE silver.taxi_trips_cleaned 
-ADD CONSTRAINT chk_passenger_count CHECK (passenger_count >= 0 OR passenger_count = -999),
-ADD CONSTRAINT chk_trip_distance CHECK (trip_distance >= 0 OR trip_distance = -999),
-ADD CONSTRAINT chk_ratecode_id CHECK (ratecode_id IN (1, 2, 3, 4, 5, 6, 99, -999)),
-ADD CONSTRAINT chk_fare_amount CHECK (fare_amount >= 0 OR fare_amount = -999),
-ADD CONSTRAINT chk_total_amount CHECK (total_amount >= 0 OR total_amount = -999),
-ADD CONSTRAINT chk_tip_amount CHECK (tip_amount >= 0 OR tip_amount = -999),
-ADD CONSTRAINT chk_tolls_amount CHECK (tolls_amount >= 0 OR tolls_amount = -999),
-ADD CONSTRAINT chk_congestion_surcharge CHECK (congestion_surcharge >= 0 OR congestion_surcharge = -999),
-ADD CONSTRAINT chk_airport_fee CHECK (airport_fee >= 0 OR airport_fee = -999);
+ADD CONSTRAINT chk_passenger_count CHECK (passenger_count IS NOT NULL),
+ADD CONSTRAINT chk_trip_distance CHECK (trip_distance IS NOT NULL),
+ADD CONSTRAINT chk_ratecode_id CHECK (ratecode_id IS NOT NULL),
+ADD CONSTRAINT chk_fare_amount CHECK (fare_amount IS NOT NULL),
+ADD CONSTRAINT chk_total_amount CHECK (total_amount IS NOT NULL),
+ADD CONSTRAINT chk_tip_amount CHECK (tip_amount IS NOT NULL),
+ADD CONSTRAINT chk_tolls_amount CHECK (tolls_amount IS NOT NULL),
+ADD CONSTRAINT chk_congestion_surcharge CHECK (congestion_surcharge IS NOT NULL),
+ADD CONSTRAINT chk_airport_fee CHECK (airport_fee IS NOT NULL);
 
 ALTER TABLE silver.taxi_trips_cleaned
 ADD CONSTRAINT fk_pickup_location 

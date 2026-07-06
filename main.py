@@ -191,6 +191,18 @@ if __name__ == "__main__":
                 log_message(f"Jumlah baris yang masuk ke Table Gold.Daily Trip Summary: {daily_trip_summary_count:,} baris .")
                 print("==================================================\n")
 
+                zone_performance_summary = conn.execute(text("SELECT COUNT(*) FROM gold.zone_performance_summary;"))
+                zone_performance_summary_count = zone_performance_summary.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET zone_performance_row_count = :count WHERE run_id = :run_id;
+                """), {"count": zone_performance_summary_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke Table Gold.Zone Performance Summary: {zone_performance_summary_count:,} baris .")
+                print("==================================================\n")
+
         print("Load view ke db gold")
         schema_manager.execute_sql_file("db/init/05_views.sql")
 
@@ -241,7 +253,7 @@ if __name__ == "__main__":
             with engine.begin() as conn:
                 conn.execute(text("""
                     UPDATE audit.pipeline_run 
-                    SET status = 'SUCCESS', end_time = CURRENT_TIMESTAMP, execution_time_seconds = :duration 
+                    SET status = 'SUCCESS', end_time = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta'), execution_time_seconds = :duration 
                     WHERE run_id = :run_id;
                 """), {"duration": duration, "run_id": run_id})
 
@@ -253,7 +265,7 @@ if __name__ == "__main__":
             with engine.begin() as conn:
                 conn.execute(text("""
                     UPDATE audit.pipeline_run 
-                    SET status = 'FAILED', end_time = CURRENT_TIMESTAMP, error_message = :error, execution_time_seconds = :duration 
+                    SET status = 'FAILED', end_time = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta'), error_message = :error, execution_time_seconds = :duration 
                     WHERE run_id = :run_id;
                 """), {"error": error_msg, "duration": duration, "run_id": run_id})
         raise main_error
