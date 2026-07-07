@@ -8,8 +8,11 @@ CREATE TABLE silver.taxi_trips_cleaned AS
 WITH temp_taxi_trips AS (
 SELECT 
     t.*,
-    (t.tpep_dropoff_datetime::timestamp - t.tpep_pickup_datetime::timestamp) AS trip_duration_minutes,
+    ROUND(
+        (EXTRACT(EPOCH FROM (t.tpep_dropoff_datetime::timestamp - t.tpep_pickup_datetime::timestamp)) / 60)::numeric, 2) 
+    AS trip_duration_minutes,
     t.tpep_pickup_datetime::date AS pickup_date,
+    EXTRACT(HOUR FROM t.tpep_pickup_datetime) AS pickup_hour,
     TO_CHAR(t.tpep_pickup_datetime::timestamp, 'Day') AS pickup_day_name,
     CASE 
         WHEN EXTRACT(ISODOW FROM t.tpep_pickup_datetime::timestamp) IN (6, 7) THEN true 
@@ -66,6 +69,7 @@ SELECT
     airport_fee,
     trip_duration_minutes, 
     pickup_date, 
+    pickup_hour,
     pickup_day_name, 
     is_weekend, 
     time_periode,
@@ -126,7 +130,7 @@ DROP TABLE IF EXISTS silver.data_quality_issues CASCADE;
 CREATE TABLE silver.data_quality_issues AS
 WITH temp_issues AS (
 SELECT
-    *,
+    t.*,
     CASE
         WHEN t.tpep_pickup_datetime >= t.tpep_dropoff_datetime THEN 'duration invalid'
         WHEN t.trip_distance <= 0 THEN 'distance invalid'

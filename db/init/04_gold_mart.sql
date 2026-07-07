@@ -16,6 +16,7 @@ FROM silver.taxi_trips_cleaned ttc
 WHERE ttc.trip_distance <> -999 AND ttc.fare_amount <> -999
 GROUP BY ttc.tpep_pickup_datetime::date
 ORDER BY ttc.tpep_pickup_datetime::date;
+
 -- ==============================================================================
 -- PROSES GOLD MART - TABLE DAILY ZONE PERFORMANCE SUMMARY
 -- ==============================================================================
@@ -43,7 +44,7 @@ dropoff_stats AS (
     GROUP BY dolocation_id
 )
 SELECT 
-    z.*
+    z.*,
     COALESCE(p.total_pickup_trip, 0) AS total_pickup_trip,
     COALESCE(d.total_dropoff_trip, 0) AS total_dropoff_trip,
     ROUND(COALESCE(p.total_revenue, 0)::numeric, 2) AS total_revenue,
