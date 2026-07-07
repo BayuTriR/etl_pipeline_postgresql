@@ -80,33 +80,29 @@ Query ini menyaring zona yang memiliki tingkat penjemputan (*pickup*) **di atas 
 * **Aksi:** Alokasikan armada yang lebih hemat energi atau pengemudi baru di area ini karena volume ordernya tinggi dan stabil.
 
 ### B. Ranking Zona Berdasarkan Kontribusi Pendapatan (Query 18)
-Menggunakan fungsi *Windowing* (`RANK() OVER`), query ini mengurutkan wilayah dari kontributor pendapatan terbesar hingga terkecil.
+Menggunakan fungsi *Windowing* (`DENSE_RANK() OVER (ORDER BY SUM(total_amount) DESC)`), query ini mengurutkan wilayah dari kontributor pendapatan terbesar hingga terkecil.
 
-| Rank | Borough (Wilayah) | Pickup Zone (Zona) | Total Revenue |
-| :---: | :--- | :--- | :--- |
-| **1** | `Queens` | `JFK Airport` | $ 11063083.51 |
-| **2** | `Queens` | `LaGuardia Airport` | $ 5654486.54 |
-| **3** | `Manhattan` | `Midtown Center` | $ 3860074.9 |
-| **4** | `Manhattan` | `Upper East Side North` | $ 3439390.36 |
-| **5** | `Manhattan` | `Upper East Side South` | $ 3430062.18 |
-| **6** | `Manhattan` | `Times Sq/Theatre District` | $ 3065312.64 |
-| **7** | `Manhattan` | `Penn Station/Madison Sq West` | $ 2788087.26 |
-| **8** | `Manhattan` | `Midtown East` | $ 2756837.56 |
-| **9** | `Manhattan` | `Lincoln Square East` | $ 2537406.59 |
-| **10** | `Manhattan` | `East Village` | $ 2520088.46 |
-| **...** | `...` | `...` | `...` |
-| **251** | `Queens` | `Breezy Point/Fort Tilden/Riis Beach` | $ 683.09 |
-| **252** | `Staten Island` | `Port Richmond` | $ 594.95 |
-| **253** | `Brooklyn` | `Green-Wood Cemetery` | $ 491.59 |
-| **254** | `Staten Island` | `Eltingville/Annadale/Prince's Bay` | $ 435.8 |
-| **255** | `Bronx` | `Rikers Island` | $ 251.39 |
-| **256** | `Staten Island` | `Arden Heights` | $ 203.5 |
-| **257** | `Queens` | `Jamaica Bay` | $ 193.81 |
-| **258** | `Staten Island` | `Rossville/Woodrow` | $ 162.19 |
-| **259** | `Staten Island` | `Freshkills Park` | $ 124 |
-| **260** | `Manhattan` | `Governor's Island/Ellis Island/Liberty Island` | $ 120.84 |
-| **261** | `Staten Island` | `Charleston/Tottenville` | $ 86.65 |
+| Rank | Zone ID | Borough | Zone Name | Total Trips | Total Revenue |
+| :---: | :--- | :---: | :--- | :---: | :--- |
+| **1** | **132** | `Queens` | `JFK Airport` | 152589 | $ 11063083.51 |
+| **2** | **138** | `Queens` | `LaGuardia Airport` | 85190 | $ 5654486.54 |
+| **3** | **161** | `Manhattan` | `Midtown Center` | 146641 | $ 3860074.9 |
+| **4** | **236** | `Manhattan` | `Upper East Side North` | 153640 | $ 3439390.36 |
+| **5** | **237** | `Manhattan` | `Upper East Side South` | 160343 | $ 3430062.18 |
+| **...** | **...** | `...` | `...` | `...` | [...] | [$ ...] |
 ---
+
+### C. Ranking Zona Berdasarkan Wilayah Lokal / Borough (Query 19)
+Melalui fungsi Windowing `DENSE_RANK() OVER (PARTITION BY borough ORDER BY total_revenue DESC)`, kita memecah kompetisi pendapatan ke tingkat regional masing-masing wilayah. Ini membantu kita melihat zona mana yang menjadi "Raja" di wilayahnya sendiri.
+
+| Rank in Borough | Borough | Zone ID | Zone Name | Total Trips | Total Revenue |
+| :---: | :--- | :---: | :--- | :---: | :--- |
+| **1** | `Bronx` | **168** | `Mott Haven/Port Morris` | 2837 | $ 90314.93 |
+| **2** | `Bronx` | **51** | `Co-Op City` | 1493 | $ 64485.65 |
+| **3** | `Bronx` | **69** | `East Concourse/Concourse Village` | 1837 | $ 60554.54 |
+| **4** | `Bronx` | **254** | `Williamsbridge/Olinville` | 1413 | $ 57080.55 |
+| **5** | `Bronx` | **213** | `Soundview/Castle Hill` | 1566 | $ 55559.69 |
+| **...** | **...** | `...` | `...` | `...` | [...] | [$ ...] |
 
 ## 5. Analisis Tren Harian & Deviasi Revenue
 Melalui **Query 15**, kita dapat melihat performa harian dibandingkan dengan rata-rata harian sepanjang masa (*Global Daily Average*).

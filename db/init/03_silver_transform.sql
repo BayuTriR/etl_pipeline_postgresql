@@ -139,5 +139,5 @@ SELECT
 FROM silver.taxi_trips_cleaned t
 )
 SELECT * FROM temp_issues
-WHERE error_type <> 'valid';
+WHERE error_type != 'valid';
 

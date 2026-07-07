@@ -203,6 +203,30 @@ if __name__ == "__main__":
                 log_message(f"Jumlah baris yang masuk ke Table Gold.Zone Performance Summary: {zone_performance_summary_count:,} baris .")
                 print("==================================================\n")
 
+                hourly_demand_summary = conn.execute(text("SELECT COUNT(*) FROM gold.hourly_demand_summary;"))
+                hourly_demand_summary_count = hourly_demand_summary.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET hourly_demand_row_count = :count WHERE run_id = :run_id;
+                """), {"count": hourly_demand_summary_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke Table Gold.Hourly Demand Summary: {hourly_demand_summary_count:,} baris .")
+                print("==================================================\n")
+
+                payment_behavior_summary = conn.execute(text("SELECT COUNT(*) FROM gold.payment_behavior_summary;"))
+                payment_behavior_summary_count = payment_behavior_summary.fetchone()[0]
+                
+                conn.execute(text("""
+                    UPDATE audit.pipeline_run SET payment_behavior_row_count = :count WHERE run_id = :run_id;
+                """), {"count": payment_behavior_summary_count, "run_id": run_id})
+                conn.commit()
+
+                print("\n==================================================")
+                log_message(f"Jumlah baris yang masuk ke Table Gold.Payment Behavior Summary: {payment_behavior_summary_count:,} baris .")
+                print("==================================================\n")
+                
         print("Load view ke db gold")
         schema_manager.execute_sql_file("db/init/05_views.sql")
 

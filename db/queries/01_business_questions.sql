@@ -127,26 +127,3 @@ SELECT
 FROM daily_revenue dr
 CROSS JOIN global_daily_avg gda
 ORDER BY dr.pickup_date;
-
--- ==============================================================================
--- 18. Ranking pickup zone berdasarkan total revenue. 
--- ==============================================================================
-
-WITH zone_revenue AS (
-    SELECT 
-        pickup_borough,
-        pickup_zone,
-        ROUND(SUM(total_amount)::numeric, 2) AS total_revenue
-    FROM gold.vw_trip_enriched
-    WHERE pickup_zone IS NOT NULL 
-      AND pickup_zone <> 'Unknown'
-      AND fare_amount <> -999
-    GROUP BY pickup_borough, pickup_zone
-)
-SELECT 
-    RANK() OVER (ORDER BY total_revenue DESC) AS revenue_rank,
-    pickup_borough,
-    pickup_zone,
-    total_revenue
-FROM zone_revenue
-ORDER BY revenue_rank ASC;

@@ -18,7 +18,7 @@ GROUP BY ttc.tpep_pickup_datetime::date
 ORDER BY ttc.tpep_pickup_datetime::date;
 
 -- ==============================================================================
--- PROSES GOLD MART - TABLE DAILY ZONE PERFORMANCE SUMMARY
+-- PROSES GOLD MART - TABLE ZONE PERFORMANCE SUMMARY
 -- ==============================================================================
 
 DROP TABLE IF EXISTS gold.zone_performance_summary;
@@ -56,3 +56,43 @@ LEFT JOIN pickup_stats p ON z.location_id = p.zone_id
 LEFT JOIN dropoff_stats d ON z.location_id = d.zone_id
 WHERE p.total_pickup_trip IS NOT NULL OR d.total_dropoff_trip IS NOT NULL
 ORDER BY total_revenue DESC;
+
+-- ==============================================================================
+-- PROSES GOLD MART - TABLE HOURLY DEMAND SUMMARY
+-- ==============================================================================
+
+DROP TABLE IF EXISTS gold.hourly_demand_summary;
+
+CREATE TABLE gold.hourly_demand_summary AS
+SELECT 
+    pickup_date,
+    pickup_hour::int AS pickup_hour,
+    pickup_borough AS borough,
+    COUNT(*) AS total_trips,
+    ROUND(SUM(total_amount)::numeric, 2) AS total_revenue,
+    ROUND(AVG(trip_duration_minutes)::numeric, 2) AS average_duration_minutes,
+    ROUND(AVG(trip_distance)::numeric, 2) AS average_distance_miles
+FROM silver.taxi_trips_cleaned
+WHERE pickup_borough IS NOT NULL AND pickup_borough != 'Unknown'
+GROUP BY pickup_date, pickup_hour, pickup_borough
+ORDER BY pickup_date DESC, pickup_hour ASC, total_trips DESC;
+
+-- ==============================================================================
+-- PROSES GOLD MART - TABLE PAYMENT BEHAVIOR SUMMARY
+-- ==============================================================================
+
+CREATE TABLE gold.payment_behavior_summary AS
+SELECT 
+    pickup_date,
+    payment_type,
+    COUNT(*) AS total_transactions,
+    ROUND(SUM(total_amount)::numeric, 2) AS total_revenue,
+    ROUND(SUM(tip_amount)::numeric, 2) AS total_tips,
+    ROUND(
+        (SUM(tip_amount) / NULLIF(SUM(fare_amount), 0) * 100)::numeric, 
+        2
+    ) AS average_tip_percentage
+FROM silver.taxi_trips_cleaned
+WHERE payment_type IS NOT NULL
+GROUP BY pickup_date, payment_type
+ORDER BY pickup_date DESC, total_transactions DESC;
